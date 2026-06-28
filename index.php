@@ -1,4 +1,5 @@
 <?php
+session_start();
 include 'db.php';
 
 $limit = 3;
@@ -10,7 +11,7 @@ $search = "";
 
 if(isset($_GET['search']) && !empty($_GET['search']))
 {
-    $search = $_GET['search'];
+    $search = trim($_GET['search']);
 
     $sql = "SELECT * FROM posts
             WHERE title LIKE '%$search%'
@@ -44,7 +45,7 @@ $total_pages = ceil($total_rows / $limit);
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Blog Application</title>
+    <title>Blog Management System</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -64,7 +65,7 @@ $total_pages = ceil($total_rows / $limit);
             name="search"
             class="form-control"
             placeholder="Search posts..."
-            value="<?php echo $search; ?>"
+            value="<?php echo htmlspecialchars($search); ?>"
         >
 
         <button
@@ -83,28 +84,25 @@ $total_pages = ceil($total_rows / $limit);
         Add New Post
     </a>
 
-    <?php
-    while($row = $result->fetch_assoc())
-    {
-    ?>
+    <?php while($row = $result->fetch_assoc()) { ?>
 
         <div class="card mb-3">
 
             <div class="card-body">
 
                 <h3 class="card-title">
-                    <?php echo $row['title']; ?>
+                    <?php echo htmlspecialchars($row['title']); ?>
                 </h3>
 
                 <p class="card-text">
-                    <?php echo $row['content']; ?>
+                    <?php echo htmlspecialchars($row['content']); ?>
                 </p>
 
                 <?php
                 if(isset($row['created_at']))
                 {
                     echo "<small class='text-muted'>Created: "
-                         .$row['created_at']
+                         .htmlspecialchars($row['created_at'])
                          ."</small><br><br>";
                 }
                 ?>
@@ -116,21 +114,23 @@ $total_pages = ceil($total_rows / $limit);
                     Edit
                 </a>
 
-                <a
-                    href="delete_post.php?id=<?php echo $row['id']; ?>"
-                    class="btn btn-danger"
-                    onclick="return confirm('Are you sure?')"
-                >
-                    Delete
-                </a>
+                <?php if(isset($_SESSION['role']) && $_SESSION['role'] == 'admin') { ?>
+
+                    <a
+                        href="delete_post.php?id=<?php echo $row['id']; ?>"
+                        class="btn btn-danger"
+                        onclick="return confirm('Are you sure you want to delete this post?')"
+                    >
+                        Delete
+                    </a>
+
+                <?php } ?>
 
             </div>
 
         </div>
 
-    <?php
-    }
-    ?>
+    <?php } ?>
 
     <div class="mt-4">
 

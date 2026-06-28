@@ -1,52 +1,116 @@
 <?php
+session_start();
 include 'db.php';
 
-$id = $_GET['id'];
-
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-
-    $conn->query(
-        "UPDATE posts
-         SET title='$title',
-             content='$content'
-         WHERE id=$id"
-    );
-
-    header("Location: index.php");
+if(!isset($_SESSION['user']))
+{
+    header("Location: login.php");
     exit();
 }
 
-$result = $conn->query(
-    "SELECT * FROM posts WHERE id=$id"
+$id = $_GET['id'];
+
+$stmt = $conn->prepare(
+    "SELECT * FROM posts WHERE id = ?"
 );
 
+$stmt->bind_param("i", $id);
+$stmt->execute();
+
+$result = $stmt->get_result();
 $row = $result->fetch_assoc();
+
+if($_SERVER["REQUEST_METHOD"] == "POST")
+{
+    $title = trim($_POST['title']);
+    $content = trim($_POST['content']);
+
+    if(empty($title) || empty($content))
+    {
+        die("Title and Content are required");
+    }
+
+    $update = $conn->prepare(
+        "UPDATE posts
+         SET title = ?, content = ?
+         WHERE id = ?"
+    );
+
+    $update->bind_param(
+        "ssi",
+        $title,
+        $content,
+        $id
+    );
+
+    if($update->execute())
+    {
+        header("Location: index.php");
+        exit();
+    }
+}
 ?>
 
-<h2>Edit Post</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Post</title>
 
-<form method="POST">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-    Title:<br>
-    <input type="text"
-           name="title"
-           value="<?php echo $row['title']; ?>">
+<body>
 
-    <br><br>
+<div class="container mt-5">
 
-    Content:<br>
+    <h2>Edit Post</h2>
 
-    <textarea name="content"
-              rows="5"
-              cols="40"><?php echo $row['content']; ?></textarea>
+    <form method="POST">
 
-    <br><br>
+        <div class="mb-3">
 
-    <button type="submit">
-        Update Post
-    </button>
+            <label>Title</label>
 
-</form>
+            <input
+                type="text"
+                name="title"
+                class="form-control"
+                value="<?php echo htmlspecialchars($row['title']); ?>"
+                required
+            >
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Content</label>
+
+            <textarea
+                name="content"
+                class="form-control"
+                rows="5"
+                required
+            ><?php echo htmlspecialchars($row['content']); ?></textarea>
+
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-warning"
+        >
+            Update Post
+        </button>
+
+        <a
+            href="index.php"
+            class="btn btn-secondary"
+        >
+            Back
+        </a>
+
+    </form>
+
+</div>
+
+</body>
+</html>

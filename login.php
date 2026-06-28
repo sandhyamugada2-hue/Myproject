@@ -3,40 +3,102 @@
 session_start();
 include 'db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if($_SERVER["REQUEST_METHOD"] == "POST")
+{
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+    if(empty($username) || empty($password))
+    {
+        die("All fields are required");
+    }
 
-    $sql = "SELECT * FROM users WHERE username='$username'";
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare(
+        "SELECT * FROM users WHERE username = ?"
+    );
 
-    if ($result->num_rows > 0) {
+    $stmt->bind_param("s", $username);
 
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+
+    if($result->num_rows > 0)
+    {
         $row = $result->fetch_assoc();
 
-        if (password_verify($password, $row['password'])) {
+        if(password_verify($password, $row['password']))
+        {
+            $_SESSION['user'] = $row['username'];
+            $_SESSION['role'] = $row['role'];
 
-            $_SESSION['user'] = $username;
-
-            header("Location: dashboard.php");
+            header("Location: index.php");
             exit();
-        } else {
-            echo "Wrong password!";
         }
-
-    } else {
-        echo "User not found!";
+        else
+        {
+            echo "Invalid Password";
+        }
+    }
+    else
+    {
+        echo "User not found";
     }
 }
 ?>
 
-<form method="POST">
-    Username:
-    <input type="text" name="username" required><br><br>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
 
-    Password:
-    <input type="password" name="password" required><br><br>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
 
-    <button type="submit">Login</button>
-</form>
+<body>
+
+<div class="container mt-5">
+
+    <h2>Login</h2>
+
+    <form method="POST">
+
+        <div class="mb-3">
+
+            <label>Username</label>
+
+            <input
+                type="text"
+                name="username"
+                class="form-control"
+                required
+            >
+
+        </div>
+
+        <div class="mb-3">
+
+            <label>Password</label>
+
+            <input
+                type="password"
+                name="password"
+                class="form-control"
+                required
+            >
+
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Login
+        </button>
+
+    </form>
+
+</div>
+
+</body>
+</html>
