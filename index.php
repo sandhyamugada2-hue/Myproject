@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 include 'db.php';
 
 $result = $conn->query("SELECT * FROM posts");
@@ -30,4 +31,7 @@ while($row = $result->fetch_assoc()) {
 
 <?php
 }
+=======
+echo "Hello ApexPlanet!";
+>>>>>>> 6ccf50e77b2d102e7467926e46aabeea5f5011b6
 ?>
